@@ -1574,6 +1574,12 @@ export default function StockRankerApp() {
               ))}
             </div>
           </section>
+
+          <p className="pb-3 text-center text-[11px] leading-5 text-slate-500 light:text-slate-600">
+            Fine print: investing in stocks always involves risk, including the possible loss of money.
+            AI ratings, market data, rankings, and analysis on Trading Floor, 9:30 are not absolute,
+            guaranteed, or personal financial advice. Always do your own research before buying or selling.
+          </p>
         </div>
       </div>
     </main>
