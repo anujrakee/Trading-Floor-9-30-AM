@@ -4085,6 +4085,34 @@ const nicheStocks: Stock[] = [
     weaknesses: ["Cash burn", "Launch risk", "Speculative valuation"]
   }),
   createNicheStock({
+    ticker: "SPACEX",
+    name: "SpaceX (Private)",
+    sector: "Industrials",
+    industry: "Aerospace & Defense",
+    country: "United States",
+    price: 0,
+    change: 0,
+    marketCap: "Private",
+    volume: "N/A",
+    eps: 0,
+    high52: 0,
+    low52: 0,
+    aiScore: 8.4,
+    confidence: 72,
+    risk: "Elevated",
+    recommendation: "Hold",
+    revenueGrowth: 28,
+    earningsGrowth: 18,
+    margin: 12,
+    debt: "Private company disclosure limited",
+    sentiment: "Very bullish",
+    valuation: "Private market aerospace leader",
+    outlook: "SpaceX is not publicly traded, but its launch dominance, Starlink scale, and reusable rocket lead make it important to track.",
+    strengths: ["Reusable rocket leadership", "Starlink growth", "Government and commercial launch demand"],
+    weaknesses: ["Not publicly tradable", "Limited financial disclosures", "Regulatory and launch execution risk"],
+    chart: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  }),
+  createNicheStock({
     ticker: "ASTS",
     name: "AST SpaceMobile",
     sector: "Communication Services",
@@ -4208,8 +4236,8 @@ const nicheStocks: Stock[] = [
 
 export const stocks: Stock[] = [...coreStocks, ...nicheStocks];
 
-export const trendingSearches = ["AI chips", "Mega-cap tech", "Dividend compounders", "Semiconductors", "GLP-1 leaders", "Managed care", "Niche growth", "Space stocks", "Cybersecurity", "Latin America"];
-export const recentSearches = ["AAPL", "NVDA", "TSLA", "JPM", "GOOGL", "AMZN", "QQQ", "CRWD", "CELH", "RKLB"];
+export const trendingSearches = ["AI chips", "Mega-cap tech", "Dividend compounders", "Semiconductors", "GLP-1 leaders", "Managed care", "Niche growth", "Space stocks", "SpaceX", "Latin America"];
+export const recentSearches = ["AAPL", "NVDA", "TSLA", "JPM", "GOOGL", "AMZN", "QQQ", "CRWD", "SPACEX", "RKLB"];
 export const marketNews = [
   "AI infrastructure spending keeps semiconductor leaders near the top of institutional screens.",
   "Healthcare momentum broadens as obesity drug demand reshapes long-term earnings forecasts.",
