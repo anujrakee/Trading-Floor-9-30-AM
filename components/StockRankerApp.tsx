@@ -17,7 +17,7 @@ import {
   TrendingUp,
   X
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ElementType, type ReactNode, type RefObject } from "react";
 import {
   Area,
   AreaChart,
@@ -30,7 +30,9 @@ import {
   XAxis,
   YAxis
 } from "recharts";
+import Image from "next/image";
 import AuthControls, { AuthIdentityBridge } from "@/components/AuthControls";
+import RadialOrbitalTimeline, { type TimelineItem } from "@/components/ui/radial-orbital-timeline";
 import { marketNews, recentSearches, Stock, stocks, trendingSearches } from "@/lib/stocks";
 
 type Holding = {
@@ -59,6 +61,26 @@ type MarketQuote = {
   dayHigh?: number | null;
   dayLow?: number | null;
 };
+
+type AppPage = "home" | "dashboard" | "markets" | "rankings" | "analysis" | "portfolio" | "alerts";
+
+type AppPageItem = {
+  id: AppPage;
+  label: string;
+  note: string;
+  icon: ElementType;
+  energy: number;
+};
+
+const appPages: AppPageItem[] = [
+  { id: "home", label: "Home", note: "Opening bell", icon: CandlestickChart, energy: 96 },
+  { id: "dashboard", label: "Dashboard", note: "Live tape", icon: Activity, energy: 88 },
+  { id: "markets", label: "Markets", note: "Movers", icon: TrendingUp, energy: 84 },
+  { id: "rankings", label: "Rankings", note: "AI scores", icon: Star, energy: 92 },
+  { id: "analysis", label: "Analysis", note: "Deep read", icon: LineChart, energy: 86 },
+  { id: "portfolio", label: "Portfolio", note: "Holdings", icon: CircleDollarSign, energy: 78 },
+  { id: "alerts", label: "Alerts", note: "Tripwires", icon: Bell, energy: 72 }
+];
 
 const USER_ID_KEY = "stockranker:user-id";
 const USER_STATE_KEY = "stockranker:user-state";
@@ -126,6 +148,122 @@ function LogoMark({ stock }: { stock: Stock }) {
   );
 }
 
+function OrbitalPageSelector({
+  pages,
+  activePage,
+  onSelect,
+  fullScreen = false
+}: {
+  pages: AppPageItem[];
+  activePage: AppPage;
+  onSelect: (page: AppPage) => void;
+  fullScreen?: boolean;
+}) {
+  const active = pages.find((page) => page.id === activePage) ?? pages[0];
+  const [viewportWidth, setViewportWidth] = useState(1024);
+  const radiusX = fullScreen ? Math.min(300, Math.max(132, viewportWidth * 0.28)) : 112;
+  const radiusY = fullScreen ? Math.min(170, Math.max(88, viewportWidth * 0.16)) : 54;
+
+  useEffect(() => {
+    if (!fullScreen) return;
+    const updateViewport = () => setViewportWidth(window.innerWidth);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, [fullScreen]);
+
+  if (fullScreen) {
+    const timelineData: TimelineItem[] = pages.map((page, index) => ({
+      id: index + 1,
+      title: page.label,
+      date: page.note,
+      content:
+        page.id === "home"
+          ? "Opening bell: search, saved names, and the main market desk."
+          : page.id === "dashboard"
+            ? "Live tape: price, valuation, volume, performance, and chart movement."
+            : page.id === "markets"
+              ? "Movers room: top gainers, top losers, and the most active names."
+              : page.id === "rankings"
+                ? "AI board: highest scores, value names, growth names, dividends, and momentum."
+                : page.id === "analysis"
+                  ? "Deep read: company profile, AI score, risk, strengths, weaknesses, news, and financials."
+                  : page.id === "portfolio"
+                    ? "Position book: holdings, watchlists, allocation, and benchmark tracking."
+                    : "Tripwires: price alerts, rating changes, earnings, and market news.",
+      category: "Trading Floor",
+      icon: page.icon,
+      relatedIds: [((index + 1) % pages.length) + 1, ((index + pages.length - 1) % pages.length) + 1],
+      status: page.id === activePage ? "in-progress" : index < 4 ? "completed" : "pending",
+      energy: page.energy
+    }));
+
+    return (
+      <RadialOrbitalTimeline
+        timelineData={timelineData}
+        onItemSelect={(item) => {
+          const page = pages[item.id - 1];
+          if (page) onSelect(page.id);
+        }}
+      />
+    );
+  }
+
+  return (
+    <nav className={`orbital-page-selector ${fullScreen ? "is-fullscreen" : ""}`} aria-label="Page selection">
+      {fullScreen && (
+        <div className="orbital-intro">
+          <p>Trading Floor, 9:30</p>
+          <h1>Choose your desk</h1>
+          <span>Tap an orbit to enter that room.</span>
+        </div>
+      )}
+      <div className="orbital-core" aria-hidden="true">
+        <span />
+        <span />
+      </div>
+      <button
+        type="button"
+        className="orbital-center"
+        onClick={() => onSelect(active.id)}
+        aria-label="Enter selected Rakee Capital floor"
+      >
+        <Image src="/rakee-capital-logo.png" alt="" fill sizes="150px" className="orbital-logo" priority aria-hidden="true" />
+      </button>
+      <div className="orbital-ring" aria-hidden="true" />
+      {pages.map((page, index) => {
+        const Icon = page.icon;
+        const angle = (index / pages.length) * Math.PI * 2 - Math.PI / 2;
+        const x = Math.cos(angle) * radiusX;
+        const y = Math.sin(angle) * radiusY;
+        const isActive = page.id === activePage;
+
+        return (
+          <button
+            key={page.id}
+            type="button"
+            aria-current={isActive ? "page" : undefined}
+            aria-label={page.label}
+            className={`orbital-node ${isActive ? "is-active" : ""}`}
+            style={
+              {
+                "--node-x": `${x}px`,
+                "--node-y": `${y}px`,
+                "--node-energy-size": `${28 + page.energy * 0.34}px`
+              } as CSSProperties
+            }
+            onClick={() => onSelect(page.id)}
+          >
+            <span className="orbital-node-glow" />
+            <Icon className="h-4 w-4" aria-hidden="true" />
+            <span className="orbital-node-label">{page.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
 function MiniChart({ values, positive }: { values: number[]; positive: boolean }) {
   const max = Math.max(...values);
   const min = Math.min(...values);
@@ -151,6 +289,89 @@ function MetricCard({ label, value, accent }: { label: string; value: string; ac
     <div className="soft-card rounded-lg border border-line bg-white/[0.04] p-4 light:bg-white">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</p>
       <p className={`mt-2 text-xl font-black ${accent ? "text-mint" : ""}`}>{value}</p>
+    </div>
+  );
+}
+
+function HeroStat({ label, value, helper, positive }: { label: string; value: string; helper: string; positive?: boolean }) {
+  return (
+    <div className="rounded-lg border border-line bg-white/[0.035] p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{label}</p>
+      <p className={`mt-2 text-2xl font-black ${positive ? "text-mint" : ""}`}>{value}</p>
+      <p className="mt-1 text-sm text-slate-400">{helper}</p>
+    </div>
+  );
+}
+
+function MarketBriefing({
+  leaders,
+  selected,
+  onSelect
+}: {
+  leaders: Stock[];
+  selected: Stock;
+  onSelect: (stock: Stock) => void;
+}) {
+  const averageScore = leaders.reduce((sum, stock) => sum + stock.aiScore, 0) / Math.max(leaders.length, 1);
+  const positiveBreadth = leaders.filter((stock) => stock.change >= 0).length;
+  const bestMover = [...leaders].sort((a, b) => b.change - a.change)[0] ?? selected;
+
+  return (
+    <div className="glass premium-ring hidden rounded-lg p-5 lg:block">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-bold uppercase tracking-[0.18em] text-mint">Market cockpit</p>
+          <h2 className="mt-1 text-2xl font-black">Today&apos;s signal stack</h2>
+        </div>
+        <LineChart className="h-7 w-7 text-mint" aria-hidden="true" />
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <HeroStat label="AI average" value={averageScore.toFixed(1)} helper="Across tracked names" positive />
+        <HeroStat label="Breadth" value={`${positiveBreadth}/${leaders.length}`} helper="Tickers green now" positive={positiveBreadth >= leaders.length / 2} />
+        <HeroStat label="Top move" value={`${bestMover.change >= 0 ? "+" : ""}${bestMover.change}%`} helper={bestMover.ticker} positive={bestMover.change >= 0} />
+      </div>
+
+      <div className="mt-5 rounded-lg border border-line bg-white/[0.035] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Focused name</p>
+            <h3 className="mt-1 text-xl font-black">{selected.ticker} command view</h3>
+          </div>
+          <span className={`rounded-full border px-3 py-1 text-xs font-black ${getRatingTone(selected.aiScore)}`}>
+            AI {selected.aiScore}/10
+          </span>
+        </div>
+        <p className="mt-3 text-sm leading-6 text-slate-400">{selected.outlook}</p>
+      </div>
+
+      <div className="mt-5 space-y-3">
+        {[...leaders].sort((a, b) => b.aiScore - a.aiScore).slice(0, 5).map((stock, index) => (
+          <button
+            key={`hero-leader-${stock.ticker}`}
+            className={`soft-card w-full items-center gap-3 rounded-md border border-line bg-white/[0.04] p-3 text-left light:bg-white ${
+              index >= 3 ? "hidden sm:flex" : "flex"
+            }`}
+            onClick={() => onSelect(stock)}
+          >
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-line text-sm font-black text-slate-400">
+              {index + 1}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-bold">{stock.name}</p>
+              <p className="text-sm text-slate-400">{stock.ticker} • {stock.marketCap}</p>
+            </div>
+            <MiniChart values={stock.chart} positive={stock.change >= 0} />
+            <div className="text-right">
+              <p className={stock.change >= 0 ? "font-black text-mint" : "font-black text-danger"}>
+                {stock.change >= 0 ? "+" : ""}
+                {stock.change}%
+              </p>
+              <p className="text-xs text-slate-400">{stock.recommendation}</p>
+            </div>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1152,7 +1373,7 @@ function AlertsSection({
               />
             </div>
             {open && (query || suggestions.length > 0) && (
-              <div className="absolute left-0 right-0 top-12 z-20 overflow-hidden rounded-md border border-line bg-[#fbf3df] shadow-[5px_5px_0_#182018]">
+              <div className="absolute left-0 right-0 top-12 z-20 overflow-hidden rounded-md border border-line bg-white shadow-[0_18px_48px_rgba(0,0,0,0.16)]">
                 {suggestions.map((stock) => (
                   <button
                     key={`alert-search-${stock.ticker}`}
@@ -1241,6 +1462,8 @@ export default function StockRankerApp() {
   const [selected, setSelected] = useState(stocks[0]);
   const [liveStocks, setLiveStocks] = useState(stocks);
   const [light, setLight] = useState(false);
+  const [activePage, setActivePage] = useState<AppPage>("home");
+  const [showNavigator, setShowNavigator] = useState(true);
   const [watchlistTickers, setWatchlistTickers] = useState<string[]>([]);
   const [portfolio, setPortfolio] = useState<Holding[]>([]);
   const [alerts, setAlerts] = useState<StockAlert[]>([]);
@@ -1255,6 +1478,12 @@ export default function StockRankerApp() {
   const losers = [...liveStocks].sort((a, b) => a.change - b.change);
   const active = [...liveStocks].sort((a, b) => parseFloat(b.volume) - parseFloat(a.volume));
   const watchlist = liveStocks.filter((stock) => watchlistTickers.includes(stock.ticker));
+  const averageAiScore = liveStocks.reduce((sum, stock) => sum + stock.aiScore, 0) / Math.max(liveStocks.length, 1);
+  const positiveBreadth = liveStocks.filter((stock) => stock.change >= 0).length;
+  const portfolioValue = portfolio.reduce((sum, holding) => {
+    const stock = liveStocks.find((item) => item.ticker === holding.ticker);
+    return sum + (stock ? stock.price * holding.shares : 0);
+  }, 0);
 
   useEffect(() => {
     if (!toast) return;
@@ -1429,36 +1658,52 @@ export default function StockRankerApp() {
     showToast("Alert removed");
   }
 
+  function goToPage(page: AppPage) {
+    setActivePage(page);
+    setShowNavigator(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function selectStock(stock: Stock) {
+    setSelected(stock);
+    goToPage("analysis");
+  }
+
   function focusSearch() {
-    searchInputRef.current?.focus();
-    searchInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setActivePage("home");
+    setShowNavigator(false);
+    window.setTimeout(() => {
+      searchInputRef.current?.focus();
+      searchInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
   }
 
   return (
-    <main className="editorial-market min-h-screen overflow-hidden">
+    <main className={`${light ? "light " : ""}editorial-market min-h-screen overflow-hidden`}>
       <AuthIdentityBridge onUserId={setAuthenticatedUserId} />
-      <header className="sticky top-0 z-40 border-b border-line bg-ink/82 shadow-bloom backdrop-blur-xl light:bg-white/86">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:gap-4 sm:py-4">
-          <nav className="hidden items-center gap-5 text-sm font-bold text-slate-300 lg:flex light:text-slate-700">
-            <a href="#dashboard">Dashboard</a>
-            <a href="#markets">Markets</a>
-            <a href="#rankings">Rankings</a>
-            <a href="#analysis">Analysis</a>
-            <a href="#portfolio">Portfolio</a>
-            <a href="#alerts">Alerts</a>
-          </nav>
-          <nav className="order-3 flex w-full items-center gap-2 overflow-x-auto text-xs font-black text-slate-300 lg:hidden light:text-slate-700">
-            <a className="shrink-0 rounded-full border border-line bg-white/[0.04] px-3 py-1.5" href="#dashboard">Dashboard</a>
-            <a className="shrink-0 rounded-full border border-line bg-white/[0.04] px-3 py-1.5" href="#markets">Markets</a>
-            <a className="shrink-0 rounded-full border border-line bg-white/[0.04] px-3 py-1.5" href="#portfolio">Portfolio</a>
-            <a className="shrink-0 rounded-full border border-line bg-white/[0.04] px-3 py-1.5" href="#alerts">Alerts</a>
-          </nav>
-          <button aria-label="Toggle theme" className="ml-auto flex h-10 w-10 items-center justify-center rounded-md border border-line lg:ml-0" onClick={() => setLight((value) => !value)}>
-            {light ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-          </button>
-          <AuthControls />
-        </div>
-      </header>
+      {!showNavigator && (
+        <header className="sticky top-0 z-40 border-b border-line bg-ink/82 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:gap-4 sm:py-4">
+            <button type="button" onClick={() => setShowNavigator(true)} className="mr-auto flex items-center gap-3 font-black lg:mr-4">
+              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-mint text-ink">
+                <CandlestickChart className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <span>Trading Floor, 9:30</span>
+            </button>
+            <button
+              type="button"
+              className="floor-map-button rounded-md border border-line bg-white/5 px-4 py-2 text-sm font-black transition hover:border-mint/40 hover:bg-white/10"
+              onClick={() => setShowNavigator(true)}
+            >
+              Floor Map
+            </button>
+            <button aria-label="Toggle theme" className="flex h-10 w-10 items-center justify-center rounded-md border border-line lg:ml-0" onClick={() => setLight((value) => !value)}>
+              {light ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            </button>
+            <AuthControls />
+          </div>
+        </header>
+      )}
 
       {toast && (
         <div
@@ -1473,115 +1718,114 @@ export default function StockRankerApp() {
         </div>
       )}
 
-      <div className="mx-auto max-w-7xl px-4 py-8 lg:py-10">
-        <section className="relative grid min-h-[520px] items-center gap-8 py-4 sm:min-h-[620px] lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="pointer-events-none absolute right-4 top-8 hidden rotate-6 border border-ink/30 bg-[#d82418] px-5 py-2 font-serif text-5xl italic text-[#fff8e7] shadow-[6px_6px_0_#182018] lg:block">
-            market field notes
-          </div>
-          <div className="pointer-events-none absolute bottom-12 left-[42%] hidden h-24 w-44 -rotate-3 border border-ink/25 bg-[#315f35] opacity-90 shadow-[5px_5px_0_#182018] lg:block" />
-          <div>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-3 py-1.5 text-sm font-bold text-mint shadow-glow">
-              <CandlestickChart className="h-4 w-4" />
-              strange little stock intelligence, printed fresh
-            </div>
-            <h1 className="max-w-4xl bg-gradient-to-br from-white via-slate-100 to-mint bg-clip-text text-4xl font-black leading-[1.02] text-transparent sm:text-6xl lg:text-7xl light:from-slate-950 light:via-slate-800 light:to-ocean">
-              Trading Floor, 9:30 AM
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300 light:text-slate-700">
-              Market insights provided by Rakee Capital.
-            </p>
-            <div className="mt-7">
-              <SearchBox
-                inputRef={searchInputRef}
-                universe={liveStocks}
-                onSelect={setSelected}
-                onAddToWatchlist={addToWatchlist}
-                watchlistTickers={watchlistTickers}
-              />
-            </div>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <button className="shine-button rounded-md bg-mint px-5 py-3 font-black text-ink" onClick={focusSearch}>Search Stocks</button>
-              <a href="#rankings" className="rounded-md border border-line bg-white/5 px-5 py-3 font-black transition hover:border-mint/40 hover:bg-white/10">Explore Rankings</a>
-            </div>
-          </div>
-          <div className="glass premium-ring rounded-lg p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-slate-400">Highest Rated Stocks</p>
-                <h2 className="mt-1 text-2xl font-black">AI conviction board</h2>
-              </div>
-              <LineChart className="h-7 w-7 text-mint" />
-            </div>
-            <div className="mt-5 space-y-3">
-              {[...liveStocks].sort((a, b) => b.aiScore - a.aiScore).slice(0, 5).map((stock) => (
-                <button
-                  key={`popular-${stock.ticker}`}
-                  className="soft-card flex w-full items-center gap-3 rounded-md border border-line bg-white/[0.04] p-3 text-left light:bg-white"
-                  onClick={() => setSelected(stock)}
-                >
-                  <LogoMark stock={stock} />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold">{stock.name}</p>
-                    <p className="text-sm text-slate-400">{stock.ticker} • {stock.marketCap}</p>
+      {showNavigator ? (
+        <OrbitalPageSelector pages={appPages} activePage={activePage} onSelect={goToPage} fullScreen />
+      ) : (
+        <div className="mx-auto max-w-7xl px-4 py-8 lg:py-10">
+          <div className="space-y-8">
+          {activePage === "home" && (
+            <>
+              <section className="hero-section relative grid min-h-[560px] items-center gap-8 py-4 sm:min-h-[640px] lg:grid-cols-[1.02fr_0.98fr]">
+                <div>
+                  <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-mint/30 bg-mint/10 px-3 py-1.5 text-sm font-bold text-mint shadow-glow">
+                    <CandlestickChart className="h-4 w-4" />
+                    Market notes for decisive watchlists
                   </div>
-                  <MiniChart values={stock.chart} positive={stock.change >= 0} />
-                  <div className="text-right">
-                    <p className="font-black text-mint">{stock.aiScore}</p>
-                    <p className="text-xs text-slate-400">{stock.recommendation}</p>
+                  <h1 className="max-w-4xl text-4xl font-black leading-[1.02] text-white sm:text-6xl lg:text-7xl">
+                    TRADING FLOOR
+                  </h1>
+                  <p className="mt-5 max-w-2xl text-lg font-black uppercase leading-8 tracking-[0.18em] text-slate-300 light:text-slate-700">
+                    9:30 AM / Market insights provided by Rakee Capital
+                  </p>
+                  <div className="mt-7">
+                    <SearchBox
+                      inputRef={searchInputRef}
+                      universe={liveStocks}
+                      onSelect={selectStock}
+                      onAddToWatchlist={addToWatchlist}
+                      watchlistTickers={watchlistTickers}
+                    />
                   </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <div className="space-y-8">
-          <Dashboard selected={selectedStock} saved={watchlistTickers.includes(selectedStock.ticker)} onToggleWatchlist={toggleWatchlist} />
-
-          <section id="markets" className="grid gap-5 xl:grid-cols-3">
-            <StockTable title="Top Gainers" icon={<TrendingUp className="h-5 w-5 text-mint" />} items={gainers} watchlistTickers={watchlistTickers} onAddToWatchlist={addToWatchlist} onSelect={setSelected} />
-            <StockTable title="Top Losers" icon={<TrendingDown className="h-5 w-5 text-danger" />} items={losers} watchlistTickers={watchlistTickers} onAddToWatchlist={addToWatchlist} onSelect={setSelected} />
-            <StockTable title="Most Active" icon={<CircleDollarSign className="h-5 w-5 text-ocean" />} items={active} watchlistTickers={watchlistTickers} onAddToWatchlist={addToWatchlist} onSelect={setSelected} />
-          </section>
-
-          <Rankings universe={liveStocks} onSelect={setSelected} />
-          <DetailPanel selected={selectedStock} />
-          <WatchlistPortfolio
-            watchlist={watchlist}
-            portfolio={portfolio}
-            universe={liveStocks}
-            onAddToWatchlist={addToWatchlist}
-            onRemove={(ticker) => setWatchlistTickers((current) => current.filter((item) => item !== ticker))}
-            onCreateWatchlist={createMomentumWatchlist}
-            onAddHolding={addHolding}
-            onUpdateHolding={updateHolding}
-            onRemoveHolding={removeHolding}
-            onSelect={setSelected}
-          />
-          <AlertsSection alerts={alerts} universe={liveStocks} onAddAlert={addAlert} onRemoveAlert={removeAlert} />
-
-          <section className="glass premium-ring rounded-lg p-5">
-            <div className="grid gap-5 md:grid-cols-3">
-              {[
-                ["Premium AI Analysis", "Advanced scoring, portfolio optimization, smart recommendations, and institutional rankings."],
-                ["Real-Time Alerts", "Price moves, AI rating changes, earnings events, breaking news, email, and push alerts."],
-                ["Platform Integrations", "Designed for PostgreSQL, Prisma, Clerk/Auth.js, OpenAI scoring, TradingView, and Stripe."]
-              ].map(([title, body]) => (
-                <div key={title} className="soft-card rounded-md border border-line bg-white/[0.03] p-4 light:bg-white">
-                  <h3 className="font-black">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-400">{body}</p>
+                  <div className="mt-7 flex flex-wrap gap-3">
+                    <button className="shine-button rounded-md bg-mint px-5 py-3 font-black text-ink" onClick={focusSearch}>Search Stocks</button>
+                    <button type="button" onClick={() => goToPage("rankings")} className="rounded-md border border-line bg-white/5 px-5 py-3 font-black transition hover:border-mint/40 hover:bg-white/10">Explore Rankings</button>
+                  </div>
+                  <div className="mt-7 grid gap-3 sm:grid-cols-3">
+                    <HeroStat label="AI coverage" value={averageAiScore.toFixed(1)} helper={`${liveStocks.length} tracked equities`} positive />
+                    <HeroStat label="Market breadth" value={`${positiveBreadth}/${liveStocks.length}`} helper="Positive movers" positive={positiveBreadth >= liveStocks.length / 2} />
+                    <HeroStat label="Portfolio" value={formatCurrency(portfolioValue)} helper={`${watchlist.length} saved names`} positive={portfolioValue > 0} />
+                  </div>
                 </div>
-              ))}
-            </div>
-          </section>
+                <div className="hidden lg:block">
+                  <MarketBriefing leaders={liveStocks} selected={selectedStock} onSelect={selectStock} />
+                </div>
+              </section>
+
+              <section className="glass premium-ring rounded-lg p-5">
+                <div className="grid gap-5 md:grid-cols-3">
+                  {[
+                    ["Premium AI Analysis", "Advanced scoring, portfolio optimization, smart recommendations, and institutional rankings."],
+                    ["Real-Time Alerts", "Price moves, AI rating changes, earnings events, breaking news, email, and push alerts."],
+                    ["Platform Integrations", "Designed for PostgreSQL, Prisma, Clerk/Auth.js, OpenAI scoring, TradingView, and Stripe."]
+                  ].map(([title, body]) => (
+                    <div key={title} className="soft-card rounded-md border border-line bg-white/[0.03] p-4 light:bg-white">
+                      <h3 className="font-black">{title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-400">{body}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
+
+          {activePage === "dashboard" && (
+            <Dashboard selected={selectedStock} saved={watchlistTickers.includes(selectedStock.ticker)} onToggleWatchlist={toggleWatchlist} />
+          )}
+
+          {activePage === "markets" && (
+            <section id="markets" className="grid gap-5 xl:grid-cols-3">
+              <StockTable title="Top Gainers" icon={<TrendingUp className="h-5 w-5 text-mint" />} items={gainers} watchlistTickers={watchlistTickers} onAddToWatchlist={addToWatchlist} onSelect={selectStock} />
+              <StockTable title="Top Losers" icon={<TrendingDown className="h-5 w-5 text-danger" />} items={losers} watchlistTickers={watchlistTickers} onAddToWatchlist={addToWatchlist} onSelect={selectStock} />
+              <StockTable title="Most Active" icon={<CircleDollarSign className="h-5 w-5 text-ocean" />} items={active} watchlistTickers={watchlistTickers} onAddToWatchlist={addToWatchlist} onSelect={selectStock} />
+            </section>
+          )}
+
+          {activePage === "rankings" && <Rankings universe={liveStocks} onSelect={selectStock} />}
+          {activePage === "analysis" && <DetailPanel selected={selectedStock} />}
+          {activePage === "portfolio" && (
+            <WatchlistPortfolio
+              watchlist={watchlist}
+              portfolio={portfolio}
+              universe={liveStocks}
+              onAddToWatchlist={addToWatchlist}
+              onRemove={(ticker) => setWatchlistTickers((current) => current.filter((item) => item !== ticker))}
+              onCreateWatchlist={createMomentumWatchlist}
+              onAddHolding={addHolding}
+              onUpdateHolding={updateHolding}
+              onRemoveHolding={removeHolding}
+              onSelect={selectStock}
+            />
+          )}
+          {activePage === "alerts" && <AlertsSection alerts={alerts} universe={liveStocks} onAddAlert={addAlert} onRemoveAlert={removeAlert} />}
 
           <p className="pb-3 text-center text-[11px] leading-5 text-slate-500 light:text-slate-600">
             Fine print: investing in stocks always involves risk, including the possible loss of money.
             AI ratings, market data, rankings, and analysis on Trading Floor, 9:30 are not absolute,
             guaranteed, or personal financial advice. Always do your own research before buying or selling.
           </p>
+
+          <div className="market-mantra" aria-hidden="true">
+            <span>READ THE TAPE</span>
+            <span>✺</span>
+            <span>FEEL THE MARKET</span>
+            <span>✺</span>
+            <span>RISK IS REAL</span>
+            <span>✺</span>
+            <span>STAY ALIVE</span>
+          </div>
+          </div>
         </div>
-      </div>
+      )}
     </main>
   );
 }
