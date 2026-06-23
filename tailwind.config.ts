@@ -13,14 +13,14 @@ const config: Config = {
         ink: "#0B1016",
         panel: "#111922",
         line: "rgba(148, 163, 184, 0.22)",
-        mint: "#00D19A",
-        amber: "#F6C84C",
-        danger: "#FF5B6E",
-        ocean: "#1C8BFF"
+        mint: "#111111",
+        amber: "#111111",
+        danger: "#111111",
+        ocean: "#111111"
       },
       boxShadow: {
-        glow: "0 24px 80px rgba(0, 209, 154, 0.15)",
-        bloom: "0 30px 110px rgba(28, 139, 255, 0.16)"
+        glow: "0 24px 80px rgba(0, 0, 0, 0.08)",
+        bloom: "0 30px 110px rgba(0, 0, 0, 0.08)"
       }
     }
   },

@@ -1853,26 +1853,28 @@ select {
   box-shadow: none !important;
 }
 
-.editorial-market .glass:has(input),
-.editorial-market .glass:has(select),
-.editorial-market div:has(> svg + input),
-.editorial-market div:has(> input),
-.editorial-market div:has(> select) {
+.editorial-market .glass:has(input[type="search"]),
+.editorial-market .glass:has(input[placeholder*="Search"]),
+.editorial-market .glass:has(input[placeholder*="search"]),
+.editorial-market .glass:has(select) {
   border-color: #111111 !important;
   background: #ffffff !important;
   color: #050505 !important;
   box-shadow: none !important;
 }
 
-.editorial-market .glass:has(input) svg,
-.editorial-market div:has(> svg + input) svg {
+.editorial-market .glass:has(input[placeholder*="Search"]) svg,
+.editorial-market .glass:has(input[placeholder*="search"]) svg {
   color: #050505 !important;
   stroke: #050505 !important;
 }
 
-.editorial-market .glass:has(input) .text-mint,
-.editorial-market .glass:has(input) .text-slate-400,
-.editorial-market .glass:has(input) .text-slate-500 {
+.editorial-market .glass:has(input[placeholder*="Search"]) .text-mint,
+.editorial-market .glass:has(input[placeholder*="Search"]) .text-slate-400,
+.editorial-market .glass:has(input[placeholder*="Search"]) .text-slate-500,
+.editorial-market .glass:has(input[placeholder*="search"]) .text-mint,
+.editorial-market .glass:has(input[placeholder*="search"]) .text-slate-400,
+.editorial-market .glass:has(input[placeholder*="search"]) .text-slate-500 {
   color: #050505 !important;
 }
 
@@ -1912,4 +1914,113 @@ select {
   border: 1px solid #b8b8b8 !important;
   background: #e7e7e7 !important;
   color: #666666 !important;
+}
+
+/* Final monochrome contrast lock: dark rooms, white cards, readable text. */
+.editorial-market {
+  background: #f0efeb !important;
+  color: #050505 !important;
+}
+
+.editorial-market .glass,
+.editorial-market .soft-card,
+.editorial-market [class*="bg-white\\/\\[0\\.03\\]"],
+.editorial-market [class*="bg-white\\/\\[0\\.04\\]"],
+.editorial-market [class*="bg-white\\/5"],
+.editorial-market [class*="bg-white\\/10"] {
+  background-color: #f7f6f1 !important;
+  border-color: rgba(5, 5, 5, 0.18) !important;
+  color: #050505 !important;
+}
+
+.editorial-market .glass p,
+.editorial-market .glass span,
+.editorial-market .glass h3,
+.editorial-market .soft-card p,
+.editorial-market .soft-card span,
+.editorial-market .soft-card h3 {
+  color: inherit;
+}
+
+.editorial-market .text-slate-300,
+.editorial-market .text-slate-400,
+.editorial-market .text-slate-500,
+.editorial-market .light\:text-slate-700 {
+  color: #4d4d4d !important;
+}
+
+.editorial-market #dashboard,
+.editorial-market #alerts,
+.editorial-market #analysis > .glass:first-child,
+.editorial-market #portfolio > .glass:first-child {
+  background: #050505 !important;
+  color: #f7f6f1 !important;
+  border-color: #050505 !important;
+}
+
+.editorial-market #dashboard > div:first-child p,
+.editorial-market #dashboard > div:first-child h2,
+.editorial-market #alerts > div:first-child p,
+.editorial-market #alerts > div:first-child h2,
+.editorial-market #analysis > .glass:first-child > div:first-child p,
+.editorial-market #analysis > .glass:first-child > div:first-child h2,
+.editorial-market #portfolio > .glass:first-child > div:first-child p,
+.editorial-market #portfolio > .glass:first-child > div:first-child h2 {
+  color: #f7f6f1 !important;
+}
+
+.editorial-market #dashboard .glass,
+.editorial-market #dashboard .soft-card,
+.editorial-market #dashboard [class*="bg-white"],
+.editorial-market #alerts .glass,
+.editorial-market #alerts .soft-card,
+.editorial-market #alerts [class*="bg-white"],
+.editorial-market #analysis > .glass:first-child .glass,
+.editorial-market #analysis > .glass:first-child .soft-card,
+.editorial-market #analysis > .glass:first-child [class*="bg-white"],
+.editorial-market #portfolio > .glass:first-child .glass,
+.editorial-market #portfolio > .glass:first-child .soft-card,
+.editorial-market #portfolio > .glass:first-child [class*="bg-white"] {
+  background-color: #f7f6f1 !important;
+  color: #050505 !important;
+  border-color: rgba(5, 5, 5, 0.2) !important;
+}
+
+.editorial-market #dashboard .glass *,
+.editorial-market #dashboard .soft-card *,
+.editorial-market #dashboard [class*="bg-white"] *,
+.editorial-market #alerts .glass *,
+.editorial-market #alerts .soft-card *,
+.editorial-market #alerts [class*="bg-white"] *,
+.editorial-market #analysis > .glass:first-child .glass *,
+.editorial-market #analysis > .glass:first-child .soft-card *,
+.editorial-market #analysis > .glass:first-child [class*="bg-white"] *,
+.editorial-market #portfolio > .glass:first-child .glass *,
+.editorial-market #portfolio > .glass:first-child .soft-card *,
+.editorial-market #portfolio > .glass:first-child [class*="bg-white"] * {
+  color: inherit !important;
+  fill: currentColor !important;
+  stroke: currentColor;
+}
+
+.editorial-market input,
+.editorial-market select,
+.editorial-market textarea {
+  background: #ffffff !important;
+  color: #050505 !important;
+  border-color: #050505 !important;
+}
+
+.editorial-market button:not(:disabled) {
+  color: inherit;
+}
+
+.editorial-market .shine-button,
+.editorial-market .bg-mint,
+.editorial-market .bg-amber,
+.editorial-market .bg-danger,
+.editorial-market .bg-ocean {
+  background: #050505 !important;
+  color: #ffffff !important;
+  border-color: #050505 !important;
 }
